@@ -297,21 +297,32 @@ function render(){
     const href = mapsHrefForRow({_name:name}, urlK, lat, lng);
     const desc = descK ? (r[descK]??"").toString() : "";
 
-    // 写真リンク（すべてjpg前提、png指定は自動でjpgに変換）
+    // 写真リンク
     let photoHtml = "";
     if (photoK) {
-      const rawName = (r[photoK] ?? "").toString().trim();
-      if (rawName) {
-        // 拡張子が .png / .PNG / .jpeg の場合は .jpg に変換
-        let nameForFile = rawName.replace(/\.png$/i, ".jpg")
-                                 .replace(/\.jpeg$/i, ".jpg");
-        // 拡張子なしのときも .jpg を付ける
-        if (!/\.(jpg|jpeg)$/i.test(nameForFile)) {
-          nameForFile = nameForFile + ".jpg";
+      const raw = (r[photoK] ?? "").toString().trim();
+      if (raw) {
+        let photoUrl = "";
+        // 1) http/https から始まる → そのままURLとして使う
+        if (/^https?:\/\//i.test(raw)) {
+          photoUrl = raw;
         }
-
-        const projectRoot = `${location.origin}/Remote-Monitoring_map/`;
-        const photoUrl = projectRoot + "icons/" + nameForFile;
+        // 2) / から始まる → ドメイン直下パスとして使う
+        else if (raw.startsWith("/")) {
+          photoUrl = location.origin + raw;
+        }
+        // 3) / を含む（相対パス）→ origin + "/" + raw
+        else if (raw.includes("/")) {
+          photoUrl = location.origin + "/" + raw;
+        }
+        // 4) ファイル名だけ → icons/ + ファイル名（拡張子なければ .jpg）
+        else {
+          let fname = raw;
+          if (!/\.[a-z0-9]+$/i.test(fname)) {
+            fname = fname + ".jpg"; // 拡張子なければ .jpg を付ける
+          }
+          photoUrl = "icons/" + fname;
+        }
 
         photoHtml = `
           <br>
