@@ -135,6 +135,8 @@ const GRP=["備考","グループ","カテゴリ","区分","分類","班","ブ�
 const NUM=["番号","No","no","num","id","ID"];
 const SHP=["形","shape","記号","marker"];
 const URLS=["URL","url","Url","リンク","Google","StreetView","SV","sv_url","sv","streetview"];
+/* ▼ 追加：写真列候補（ヘッダ） ▼ */
+const PHT=["写真","画像","写真ファイル","画像ファイル","photo","image","img"];
 
 function normalizeHeader(s){
   return String(s).replace(/[\u3000\s]+/g,"").toLowerCase();
@@ -246,11 +248,13 @@ function render(){
     return;
   }
 
-  const descK=findKey(headers,DESC);
-  const grpK =findKey(headers,GRP);
-  const numK =findKey(headers,NUM);
-  const shpK =findKey(headers,SHP);
-  const urlK =findKey(headers,URLS);
+  const descK = findKey(headers,DESC);
+  const grpK  = findKey(headers,GRP);
+  const numK  = findKey(headers,NUM);
+  const shpK  = findKey(headers,SHP);
+  const urlK  = findKey(headers,URLS);
+  /* ▼ 追加：写真列のキーを取得 ▼ */
+  const photoK = findKey(headers,PHT);
 
   layerGroup.clearLayers(); markers=[]; grpColors={};
   const by={}, groups=[];
@@ -293,11 +297,22 @@ function render(){
 
     const href = mapsHrefForRow({_name:name}, urlK, lat, lng);
     const desc = descK ? (r[descK]??"").toString() : "";
-    /* ▼▼ ここだけ変更（「 / 形: ${shp}」を削除） ▼▼ */
-    const pop = `<b>${name}</b>${desc?`<br>${desc}`:""}<br>
+
+    /* ▼ 追加：写真ファイル名から <img> HTML を作成 ▼
+       - Excel の「写真」列には "yoron1.jpg" のようにファイル名だけ入れておく
+       - 実ファイルは "icons/yoron1.jpg" に置く前提
+    */
+    let photoHtml = "";
+    if (photoK) {
+      const photoName = (r[photoK] ?? "").toString().trim();
+      if (photoName) {
+        photoHtml = `<br><img src="icons/${photoName}" alt="地点写真" style="max-width:160px;height:auto;margin-top:4px;">`;
+      }
+    }
+
+    const pop = `<b>${name}</b>${desc ? `<br>${desc}` : ""}${photoHtml}<br>
                  <small><a class="gmaps-link" href="${href}" target="_blank" rel="noopener">Googleマップで開く</a></small><br>
                  <small>グループ: ${grp||"(空白)"}</small>`;
-    /* ▲▲ 変更はこの1か所だけ ▲▲ */
 
     const m=L.marker([lat,lng],{icon:icon(label,c,shp)}).bindPopup(pop);
     m.addTo(layerGroup);
