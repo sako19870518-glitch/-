@@ -297,12 +297,22 @@ function render(){
     const href = mapsHrefForRow({_name:name}, urlK, lat, lng);
     const desc = descK ? (r[descK]??"").toString() : "";
 
-    // 写真リンク（icons/ファイル名 を別タブで開く）
+    // 写真リンク（すべてjpg前提、png指定は自動でjpgに変換）
     let photoHtml = "";
     if (photoK) {
-      const photoName = (r[photoK] ?? "").toString().trim();
-      if (photoName) {
-        const photoUrl = `icons/${photoName}`;
+      const rawName = (r[photoK] ?? "").toString().trim();
+      if (rawName) {
+        // 拡張子が .png / .PNG / .jpeg の場合は .jpg に変換
+        let nameForFile = rawName.replace(/\.png$/i, ".jpg")
+                                 .replace(/\.jpeg$/i, ".jpg");
+        // 拡張子なしのときも .jpg を付ける
+        if (!/\.(jpg|jpeg)$/i.test(nameForFile)) {
+          nameForFile = nameForFile + ".jpg";
+        }
+
+        const projectRoot = `${location.origin}/Remote-Monitoring_map/`;
+        const photoUrl = projectRoot + "icons/" + nameForFile;
+
         photoHtml = `
           <br>
           <a href="${photoUrl}" target="_blank" rel="noopener"
